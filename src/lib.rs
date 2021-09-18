@@ -5,10 +5,12 @@
 
 //use std::rc::Rc;
 
+pub mod boxed;
 pub mod functor;
 pub mod mapable;
 pub mod derived_mapable;
 
+pub use boxed::*;
 pub use crate::functor::*;
 pub use mapable::*;
 pub use derived_mapable::*;

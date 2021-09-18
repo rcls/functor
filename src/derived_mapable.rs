@@ -14,16 +14,20 @@ pub trait DerivedMapable<T, Tag = ()> where
     // Self::Collection<U>::Collection<V> = Self::Collection<V>
     // Self = Self::Collection<T>
     type Collection<U> : DerivedMapable<
-            U, Tag, Member=<Self::Member as Functor<T, Tag>>::Functor<U>>;
+            U, Tag, Member=<Self::Member as TypeMap<T, Tag>>::Functor<U>>;
 }
 
 pub struct Derived<Tag>(Tag);
 
-impl<T, C, Tag> Functor<T, Derived<Tag>> for C
+impl<T, C, Tag> TypeMap<T, Derived<Tag>> for C
     where C: DerivedMapable<T, Tag>
 {
     type Functor<U> = <C as DerivedMapable<T, Tag>>::Collection<U>;
+}
 
+impl<T, C, Tag> Functor<T, Derived<Tag>> for C
+    where C: DerivedMapable<T, Tag>
+{
     fn into_fmap<U>(self, f: impl Fn(T) -> U) -> Self::Functor<U> {
         let f = &f;
         self.into_iter().map(|x : C::Member| x.into_fmap(f)).collect()
