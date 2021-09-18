@@ -1,8 +1,4 @@
 
-// /// Shorthand for the result of an into_fmap.
-// type Them<T, U, F, Tag>
-//    = <<F as Functor<T, Tag>>::Functor<U> as Functor<U, Tag>>::Item;
-
 /// Trait for a Functor where mapping consumes the original.
 ///
 /// `Self` is the type resulting from applying the functor to the type `T`.
@@ -14,16 +10,18 @@ pub trait Functor<T, Tag = ()> {
     // where Self::Functor<T> = Self
     // where Self::Functor<U>::Functor<V> = Self::Functor<V>
 
-    // Typically Item=T, but could e.g., be a Box or Rc.
-    // type Item = T;
+    /// What is actually stored, typically Item=T, but could e.g., be a Box or
+    /// Rc.
+    type Item = T;
 
-    fn into_fmap<U>(self, f: impl Fn(T) -> U) -> Self::Functor<U>;
+    fn into_fmap<U>(self, f: impl Fn(Self::Item) -> U) -> Self::Functor<U>;
 }
+
 
 /// Trait for a Functor that also works on references.
 pub trait RefFunctor<'a, T: 'a, Tag = ()> : Functor<T, Tag>
 {
-    fn fmap<U>(&'a self, f: impl Fn(&T) -> U) -> Self::Functor<U>;
+    fn fmap<U>(&'a self, f: impl Fn(&Self::Item) -> U) -> Self::Functor<U>;
 }
 
 
@@ -58,6 +56,7 @@ impl<'a, A: Copy, T: 'a> RefFunctor<'a, T, Comp<1>> for (A, T) {
     fn fmap<U>(&'a self, f: impl Fn(&'a T) -> U) -> (A, U) {
         (self.0, f(&self.1)) }
 }
+
 
 #[test]
 fn array1() {

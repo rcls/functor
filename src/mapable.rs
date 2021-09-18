@@ -39,17 +39,9 @@ impl<'a, T: 'a, C: 'a + Mapable<T>> RefFunctor<'a, T, Mapped> for C where
 }
 
 
-impl<T> Mapable<T> for Vec<T> {
-    type Collection<U> = Vec<U>;
-}
-
-impl<T> Mapable<T> for LinkedList<T> {
-    type Collection<U> = LinkedList<U>;
-}
-
-impl<T> Mapable<T> for VecDeque<T> {
-    type Collection<U> = VecDeque<U>;
-}
+impl<T> Mapable<T> for Vec<T>        { type Collection<U> = Vec<U>; }
+impl<T> Mapable<T> for LinkedList<T> { type Collection<U> = LinkedList<U>; }
+impl<T> Mapable<T> for VecDeque<T>   { type Collection<U> = VecDeque<U>; }
 
 #[test]
 fn vec1() {

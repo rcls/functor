@@ -1,6 +1,6 @@
 #![allow(incomplete_features)]
 #![feature(generic_associated_types)]
-// #![feature(associated_type_defaults)]
+#![feature(associated_type_defaults)]
 // #![feature(associated_type_bounds)]
 
 //use std::rc::Rc;

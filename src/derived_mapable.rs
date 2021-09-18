@@ -9,7 +9,7 @@ use std::iter::*;
 pub trait DerivedMapable<T, Tag = ()> where
     Self: IntoIterator<Item=Self::Member> + FromIterator<Self::Member>
 {
-    type Member: Functor<T, Tag>;
+    type Member: Functor<T, Tag, Item=T>;
 
     // Self::Collection<U>::Collection<V> = Self::Collection<V>
     // Self = Self::Collection<T>
@@ -17,7 +17,7 @@ pub trait DerivedMapable<T, Tag = ()> where
             U, Tag, Member=<Self::Member as Functor<T, Tag>>::Functor<U>>;
 }
 
-pub struct Derived<Tag>((Tag,));
+pub struct Derived<Tag>(Tag);
 
 impl<T, C, Tag> Functor<T, Derived<Tag>> for C
     where C: DerivedMapable<T, Tag>
