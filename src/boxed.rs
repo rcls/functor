@@ -1,6 +1,6 @@
 
-use crate::{Functor, RefFunctor, TypeMap};
-use std::{boxed::Box, ops::Deref, ops::DerefMut, rc::Rc};
+use crate::{FunctorOnce, Functor, TypeMap};
+use std::{boxed::Box, ops::Deref, rc::Rc};
 
 trait Boxed<T> : From<T> + Deref<Target=T> {
     type Boxed<U> : Boxed<U>;
@@ -13,13 +13,13 @@ impl<B, T> TypeMap<T, BoxedTag> for B where B : Boxed<T> {
     type Functor<U> = B::Boxed<U>;
 }
 
-impl<'a, T: 'a, B> RefFunctor<'a, T, BoxedTag> for B where B : Boxed<T> {
+impl<'a, T: 'a, B> Functor<'a, T, BoxedTag> for B where B : Boxed<T> {
     fn fmap<U>(&'a self, f: impl Fn(&T) -> U) -> B::Boxed<U> {
         f(self).into()
     }
 }
 
-impl<T> Functor<T, BoxedTag> for Box<T> {
+impl<T> FunctorOnce<T, BoxedTag> for Box<T> {
     fn into_fmap<U>(self, f: impl Fn(T) -> U) -> Box<U> {
         f(*self).into()
     }

@@ -4,7 +4,7 @@
 //! The Mapable trait does the gory glue, it's implementations just need to
 //! specify the set of types to use.
 
-use crate::{Functor, RefFunctor, TypeMap};
+use crate::{FunctorOnce, Functor, TypeMap};
 use std::iter::FromIterator;
 
 use std::collections::{LinkedList, VecDeque};
@@ -24,7 +24,7 @@ impl<T, C: Mapable<T>> TypeMap<T, Mapped> for C {
 }
 
 /// Anything mapable turns into a functor using its iterators.
-impl<T, C: Mapable<T>> Functor<T, Mapped> for C
+impl<T, C: Mapable<T>> FunctorOnce<T, Mapped> for C
 {
     fn into_fmap<U>(self, f: impl Fn(T) -> U) -> Self::Functor<U> {
         self.into_iter().map(f).collect()
@@ -32,7 +32,7 @@ impl<T, C: Mapable<T>> Functor<T, Mapped> for C
 }
 
 /// Mapables can also work via references.
-impl<'a, T: 'a, C: 'a + Mapable<T>> RefFunctor<'a, T, Mapped> for C where
+impl<'a, T: 'a, C: 'a + Mapable<T>> Functor<'a, T, Mapped> for C where
     &'a C: IntoIterator<Item=&'a T>
 {
     fn fmap<U>(&'a self, f: impl Fn(&T) -> U) -> Self::Functor<U> {

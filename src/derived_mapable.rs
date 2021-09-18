@@ -9,7 +9,7 @@ use std::iter::*;
 pub trait DerivedMapable<T, Tag = ()> where
     Self: IntoIterator<Item=Self::Member> + FromIterator<Self::Member>
 {
-    type Member: Functor<T, Tag, Item=T>;
+    type Member: FunctorOnce<T, Tag, Item=T>;
 
     // Self::Collection<U>::Collection<V> = Self::Collection<V>
     // Self = Self::Collection<T>
@@ -25,7 +25,7 @@ impl<T, C, Tag> TypeMap<T, Derived<Tag>> for C
     type Functor<U> = <C as DerivedMapable<T, Tag>>::Collection<U>;
 }
 
-impl<T, C, Tag> Functor<T, Derived<Tag>> for C
+impl<T, C, Tag> FunctorOnce<T, Derived<Tag>> for C
     where C: DerivedMapable<T, Tag>
 {
     fn into_fmap<U>(self, f: impl Fn(T) -> U) -> Self::Functor<U> {
@@ -36,9 +36,9 @@ impl<T, C, Tag> Functor<T, Derived<Tag>> for C
 
 // Ugh .... coherency problems on this one!
 #[cfg(disable)]
-impl<'a, T: 'a, C: 'a, Tag> RefFunctor<'a, T, Derived<Tag>> for C where
+impl<'a, T: 'a, C: 'a, Tag> Functor<'a, T, Derived<Tag>> for C where
     C: DerivedMapable<T, Tag>,
-    // C::Member: RefFunctor<'a, T, Tag> + 'a,
+    // C::Member: Functor<'a, T, Tag> + 'a,
     &'a C: IntoIterator<Item : Functor<&'a T, Tag>>,
 {
     fn fmap<U>(&'a self, f: impl Fn(&T) -> U) -> Self::Functor<U> {
