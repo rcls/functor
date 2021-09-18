@@ -5,8 +5,10 @@
 //use std::rc::Rc;
 
 pub mod mapable;
+pub mod derived_mapable;
 
 pub use mapable::*;
+pub use derived_mapable::*;
 
 // /// Shorthand for the result of an into_fmap.
 // type Them<T, U, F, Tag>
