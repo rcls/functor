@@ -40,29 +40,57 @@ impl<T, const N: usize> FunctorOnce<T> for [T; N] {
 }
 
 /// Pairs are functorial in both components.  Use a tag to indicate which.
-pub struct Comp<const N: usize>;
+pub struct Comp0;
+pub struct Comp1;
 
-impl<T, B> TypeMap<T, Comp<0>> for (T, B) { type Functor<U> = (U, B); }
-impl<A, T> TypeMap<T, Comp<1>> for (A, T) { type Functor<U> = (A, U); }
+impl<T, B> TypeMap<T, Comp0> for (T, B) {
+    type Functor<U> = (U, B);
+}
+impl<A, T> TypeMap<T, Comp1> for (A, T) {
+    type Functor<U> = (A, U);
+}
 
 /// (_, _) is functorial on .0
-impl<T, B> FunctorOnce<T, Comp<0>> for (T, B) {
+impl<T, B> FunctorOnce<T, Comp0> for (T, B) {
     fn into_fmap<U>(self, f: impl Fn(T) -> U) -> (U, B) {
         (f(self.0), self.1)
     }
 }
 
 /// (_, _) is functorial on .1
-impl<A, T> FunctorOnce<T, Comp<1>> for (A, T) {
+impl<A, T> FunctorOnce<T, Comp1> for (A, T) {
     fn into_fmap<U>(self, f: impl Fn(T) -> U) -> (A, U) {
         (self.0, f(self.1))
     }
 }
 
 /// (_, _) works on references.
-impl<'a, A: Copy, T: 'a> Functor<'a, T, Comp<1>> for (A, T) {
+impl<'a, A: Copy, T: 'a> Functor<'a, T, Comp1> for (A, T) {
     fn fmap<U>(&'a self, f: impl Fn(&'a T) -> U) -> (A, U) {
         (self.0, f(&self.1)) }
+}
+
+
+
+pub trait Coherent<T, Tag = ()> : TypeMap<T, Tag> {
+    /// Because we cannot force the expected type equalities, second best is to
+    /// have conversion functions that _should_ always be the identity in
+    /// reality.  2-categories are us.
+    ///
+    /// The only reason to call this, is if you are writing heavily generic code.
+    fn cohere<U, V>(x : <Self::Functor<U> as TypeMap<U, Tag>>::Functor<V>) -> Self::Functor<V>;
+
+    /// Because we cannot force the expected type equalities, second best is to
+    /// have conversion functions that _should_ always be the identity in
+    /// reality.  2-categories are us.
+    ///
+    /// The only reason to call this, is if you are writing heavily generic code.
+    fn inject(x : Self) -> Self::Functor<T>;
+}
+
+impl<A,T> Coherent<T, Comp1> for (A,T) {
+    fn cohere<U,V>(x : (A,V)) -> (A,V) { x }
+    fn inject(x : (A,T)) -> (A,T) { x }
 }
 
 

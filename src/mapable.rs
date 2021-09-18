@@ -10,7 +10,7 @@ use std::iter::FromIterator;
 use std::collections::{LinkedList, VecDeque};
 
 /// Trait for types which are mapable via iterators.
-pub trait Mapable<T> where Self: IntoIterator<Item=T> + FromIterator<T> {
+pub trait Mapable<T> : FromIterator<T> {
     // Self::Collection<U>::Collection<V> = Self::Collection<V>
     // Self = Self::Collection<T>
     type Collection<U> : Mapable<U>;
@@ -25,8 +25,9 @@ impl<T, C: Mapable<T>> TypeMap<T, Mapped> for C {
 
 /// Anything mapable turns into a functor using its iterators.
 impl<T, C: Mapable<T>> FunctorOnce<T, Mapped> for C
+    where C: IntoIterator<Item=T>
 {
-    fn into_fmap<U>(self, f: impl Fn(T) -> U) -> Self::Functor<U> {
+    fn into_fmap<U>(self, f: impl Fn(T) -> U) -> C::Collection<U> {
         self.into_iter().map(f).collect()
     }
 }
@@ -35,7 +36,7 @@ impl<T, C: Mapable<T>> FunctorOnce<T, Mapped> for C
 impl<'a, T: 'a, C: 'a + Mapable<T>> Functor<'a, T, Mapped> for C where
     &'a C: IntoIterator<Item=&'a T>
 {
-    fn fmap<U>(&'a self, f: impl Fn(&T) -> U) -> Self::Functor<U> {
+    fn fmap<U>(&'a self, f: impl Fn(&T) -> U) -> C::Collection<U> {
         self.into_iter().map(f).collect()
     }
 }
