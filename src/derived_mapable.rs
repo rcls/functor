@@ -1,5 +1,5 @@
 
-use crate::*;
+use crate::{Coherent, Comp1, Functor, FunctorOnce, TypeMap};
 use std::collections::{BTreeMap, HashMap};
 use std::hash::{BuildHasher, Hash};
 use std::iter::*;

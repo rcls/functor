@@ -11,6 +11,7 @@ pub mod functor;
 pub mod mapable;
 pub mod derived_mapable;
 
+pub use bifunctor::{BiTypeMap, BiFunctor, BiFunctorOnce};
 pub use boxed::*;
 pub use crate::functor::*;
 pub use mapable::*;
