@@ -5,6 +5,7 @@
 
 //use std::rc::Rc;
 
+pub mod bifunctor;
 pub mod boxed;
 pub mod functor;
 pub mod mapable;

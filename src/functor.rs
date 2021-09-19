@@ -1,5 +1,5 @@
 
-/// Base trait for Functor.  THis has the mapping on types, but no
+/// Base trait for Functor.  This has the mapping on types, but no
 /// functionality.
 ///
 /// `Tag` gives optional provision for disambiguation multiple functor types.
