@@ -30,6 +30,15 @@ pub trait Functor<'a, T: 'a, Tag = ()> : TypeMap<T, Tag> {
     fn fmap<U>(&'a self, f: impl FnMut(&Self::Item) -> U) -> Self::Functor<U>;
 }
 
+/// Trait for a Functor that works on mutable references.
+pub trait FunctorMut<'a, T: 'a, Tag = ()> : TypeMap<T, Tag> {
+    /// Functor map while mutating the original.
+    fn mut_fmap<U>(&'a mut self, f: impl FnMut(&mut Self::Item) -> U)
+                   -> Self::Functor<U>;
+    // / Mutate the original but discard output.
+    // fn fmutate(&mut self, f: impl FnMut(&mut Self::Item));
+}
+
 
 impl<T, const N: usize> TypeMap<T> for [T; N] { type Functor<U> = [U; N]; }
 
@@ -43,12 +52,8 @@ impl<T, const N: usize> FunctorOnce<T> for [T; N] {
 pub struct Comp0;
 pub struct Comp1;
 
-impl<T, B> TypeMap<T, Comp0> for (T, B) {
-    type Functor<U> = (U, B);
-}
-impl<A, T> TypeMap<T, Comp1> for (A, T) {
-    type Functor<U> = (A, U);
-}
+impl<T, B> TypeMap<T, Comp0> for (T, B) { type Functor<U> = (U, B); }
+impl<A, T> TypeMap<T, Comp1> for (A, T) { type Functor<U> = (A, U); }
 
 /// (_, _) is functorial on .0
 impl<T, B> FunctorOnce<T, Comp0> for (T, B) {
@@ -66,10 +71,16 @@ impl<A, T> FunctorOnce<T, Comp1> for (A, T) {
 
 /// (_, _) works on references.
 impl<'a, A: Copy, T: 'a> Functor<'a, T, Comp1> for (A, T) {
-    fn fmap<U>(&'a self, mut f: impl FnMut(&'a T) -> U) -> (A, U) {
+    fn fmap<U>(&self, mut f: impl FnMut(&T) -> U) -> (A, U) {
         (self.0, f(&self.1)) }
 }
 
+impl<'a, A: Copy, T: 'a> FunctorMut<'a, T, Comp1> for (A, T) {
+    fn mut_fmap<U>(&mut self, mut f: impl FnMut(&mut T) -> U) -> (A, U) {
+        (self.0, f(&mut self.1)) }
+    // fn fmutate(&mut self, mut f: impl FnMut(&mut T)) {
+    // f(&mut self.1) }
+}
 
 
 pub trait Coherent<T, Tag = ()> : TypeMap<T, Tag> {

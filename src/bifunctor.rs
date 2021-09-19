@@ -27,11 +27,21 @@ pub trait BiFunctorOnce<A, B, Tag = ()> : BiTypeMap<A, B, Tag> {
 
 
 /// Trait for a BiFunctor that works on references.
-pub trait BiFunctor<'a, A: 'a, B: 'a, Tag = ()> : BiTypeMap<A, B, Tag>
+pub trait BiFunctor<A, B, Tag = ()> : BiTypeMap<A, B, Tag>
 {
-    fn fmap2<T, U>(&'a self, f: impl FnMut(&A) -> T, g: impl FnMut(&B) -> U)
+    fn fmap2<T, U>(&self, f: impl FnMut(&A) -> T, g: impl FnMut(&B) -> U)
                    -> Self::BiFunctor<T, U>;
 }
+
+
+/// Trait for a BiFunctor that works on mutable references.
+pub trait BiFunctorMut<A, B, Tag = ()> : BiTypeMap<A, B, Tag>
+{
+    fn mut_fmap2<T, U>(&self,
+                       f: impl FnMut(&mut A) -> T, g: impl FnMut(&mut B) -> U)
+                       -> Self::BiFunctor<T, U>;
+}
+
 
 /// Pairs are a bifunctor.
 impl<A,B> BiTypeMap<A,B> for (A,B) {
