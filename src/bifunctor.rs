@@ -114,6 +114,18 @@ impl<'a, A: Clone, B, C: BiFunctor<A, B>> Functor<'a, B, Proj1<A>> for C
     }
 }
 
+pub trait BiCoherent<A, B, Tag = ()> : BiTypeMap<A, B, Tag> {
+    fn cohere<S, T, U, V>(
+        x : <Self::BiFunctor<S, T> as BiTypeMap<S, T, Tag>>::BiFunctor<U, V>)
+        -> Self::BiFunctor<U, V>;
+}
+
+
+impl<A, B> BiCoherent<A, B> for (A, B) {
+    fn cohere<S, T, U, V>(p : (U, V)) -> (U, V) { p }
+}
+
+
 mod submod {
 
 #[test]
