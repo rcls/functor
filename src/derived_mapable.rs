@@ -84,17 +84,13 @@ impl<'a, T: 'a, Tag, C: 'a> Functor<'a, T, Derived<Tag>> for C where
 {
     fn fmap<U>(&'a self, mut f: impl FnMut(&T) -> U)
                -> <Self as DerivedMapable<T, Tag>>::Collection<U> {
-        let ff = |p : <C::Member as TypeMap<T, Tag>>::Functor<&'a T>|
-                            -> <C::Member as TypeMap<T, Tag>>::Functor<U> {
-            C::Member::cohere::<&'a T, U>(p.into_fmap(&mut f))
-        };
         self.into_iter()
             .map(C::convert_ref)
-            .map(ff)
+            .map(|p| p.into_fmap(&mut f))
+            .map(C::Member::cohere::<&'a T, U>)
             .collect()
     }
 }
-
 
 
 #[test]
