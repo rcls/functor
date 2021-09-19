@@ -13,8 +13,8 @@ impl<B, T> TypeMap<T, BoxedTag> for B where B : Boxed<T> {
     type Functor<U> = B::Boxed<U>;
 }
 
-impl<'a, T: 'a, B> Functor<'a, T, BoxedTag> for B where B : Boxed<T> {
-    fn fmap<U>(&'a self, mut f: impl FnMut(&T) -> U) -> B::Boxed<U> {
+impl<'a, T, B> Functor<'a, T, BoxedTag> for B where B : Boxed<T> {
+    fn fmap<U>(&self, mut f: impl FnMut(&T) -> U) -> B::Boxed<U> {
         f(self).into()
     }
 }

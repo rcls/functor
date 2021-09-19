@@ -56,8 +56,8 @@ impl<A, B> BiFunctorOnce<A,B> for (A, B) {
     }
 }
 
-impl<'a, A: 'a, B: 'a> BiFunctor<'a, A, B> for (A, B) {
-    fn fmap2<T,U>(&'a self, mut f: impl FnMut(&A)->T, mut g: impl FnMut(&B)->U)
+impl<A, B> BiFunctor<A, B> for (A, B) {
+    fn fmap2<T,U>(&self, mut f: impl FnMut(&A)->T, mut g: impl FnMut(&B)->U)
                   -> (T, U) {
         (f(&self.0), g(&self.1))
     }
@@ -82,10 +82,9 @@ impl<A, B, C: BiFunctorOnce<A, B>> FunctorOnce<A, Proj0<B>> for C {
 
 /// A bifunctor can be specialized to a functor on it's first argument.  Note
 /// that this implementation clones the preserved data.
-impl<'a, A: 'a, B: 'a + Clone, C: BiFunctor<'a, A, B>>
-    Functor<'a, A, Proj0<B>> for C
+impl<'a, A, B: Clone, C: BiFunctor<A, B>> Functor<'a, A, Proj0<B>> for C
 {
-    fn fmap<T>(&'a self, f: impl FnMut(&A) -> T)
+    fn fmap<T>(&self, f: impl FnMut(&A) -> T)
                -> <Self as BiTypeMap<A, B>>::BiFunctor<T, B> {
         self.fmap2(f, |y| y.clone())
     }
@@ -107,10 +106,9 @@ impl<A, B, C: BiFunctorOnce<A, B>> FunctorOnce<B, Proj1<A>> for C {
 
 /// A bifunctor can be specialized to a functor on it's second argument.  Note
 /// that this implementation clones the preserved data.
-impl<'a, A: 'a + Clone, B: 'a, C: BiFunctor<'a, A, B>>
-    Functor<'a, B, Proj1<A>> for C
+impl<'a, A: Clone, B, C: BiFunctor<A, B>> Functor<'a, B, Proj1<A>> for C
 {
-    fn fmap<T>(&'a self, g: impl FnMut(&B) -> T)
+    fn fmap<T>(&self, g: impl FnMut(&B) -> T)
                -> <Self as BiTypeMap<A, B>>::BiFunctor<A, T> {
         self.fmap2(|x| x.clone(), g)
     }
