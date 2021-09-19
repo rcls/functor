@@ -9,21 +9,23 @@ use std::collections::{BTreeMap, HashMap};
 use std::hash::{BuildHasher, Hash};
 use std::marker::PhantomData;
 
-pub trait BiMapable<K, T, Tag=()> : FromIterator<Self::Member>
+
+pub trait BiMapable<K, T, Tag=()>
 {
     type Member: BiFunctorOnce<K, T, Tag> + BiCoherent<K, T, Tag>;
 
     /// Note that we only need to change type on the second coordinate!
-    type Collection<U>: BiMapable<
-            K, U, Tag,
-            Member=<Self::Member as BiTypeMap<K, T, Tag>>::BiFunctor<K, U>>;
+    type Collection<U> :
+    FromIterator<<Self::Member as BiTypeMap<K, T, Tag>>::BiFunctor<K, U>> +
+    BiMapable<K, U, Tag,
+              Member=<Self::Member as BiTypeMap<K, T, Tag>>::BiFunctor<K, U>>;
 }
 
 pub struct Derived<K, Tag>(PhantomData<K>, PhantomData<Tag>);
 
 impl<K, T, Tag, C: BiMapable<K, T, Tag>> TypeMap<T, Derived<K, Tag>> for C
 {
-    type Functor<U> = <C as BiMapable<K, T, Tag>>::Collection<U>;
+    type Functor<U> = C::Collection<U>;
 }
 
 impl<K, T, Tag, C: BiMapable<K, T, Tag>> FunctorOnce<T, Derived<K, Tag>> for C
@@ -42,8 +44,7 @@ impl<'a, K: 'a + Clone, T: 'a, Tag, C: 'a + BiMapable<K, T, Tag>>
     <C::Member as BiTypeMap<K, T, Tag>>::BiFunctor<&'a K, &'a T>
              : BiFunctorOnce<&'a K, &'a T, Tag>,
 {
-    fn fmap<U>(&'a self, mut f: impl FnMut(&T) -> U)
-               -> <Self as BiMapable<K, T, Tag>>::Collection<U> {
+    fn fmap<U>(&'a self, mut f: impl FnMut(&T) -> U) -> C::Collection<U> {
         self.into_iter()
             .map(|v| v.into_fmap2(|k| k.clone(), &mut f))
             .map(C::Member::cohere::<&'a K, &'a T, K, U>)

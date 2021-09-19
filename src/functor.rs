@@ -82,6 +82,24 @@ impl<'a, A: Copy, T> FunctorMut<'a, T, Comp1> for (A, T) {
     // f(&mut self.1) }
 }
 
+impl<T> TypeMap<T> for Option<T> {
+    type Functor<U> = Option<U>;
+}
+impl<T> FunctorOnce<T> for Option<T> {
+    fn into_fmap<U>(self, mut f: impl FnMut(T) -> U) -> Option<U> {
+        Some(f(self?))
+    }
+}
+impl<'a, T> Functor<'a, T> for Option<T> {
+    fn fmap<U>(&self, mut f: impl FnMut(&T) -> U) -> Option<U> {
+        Some(f(self.as_ref()?))
+    }
+}
+impl<'a, T> FunctorMut<'a, T> for Option<T> {
+    fn mut_fmap<U>(&mut self, mut f: impl FnMut(&mut T) -> U) -> Option<U> {
+        Some(f(self.as_mut()?))
+    }
+}
 
 pub trait Coherent<T, Tag = ()> : TypeMap<T, Tag> {
     /// Because we cannot force the expected type equalities, second best is to
