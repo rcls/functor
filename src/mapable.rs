@@ -27,7 +27,7 @@ impl<T, C: Mapable<T>> TypeMap<T, Mapped> for C {
 impl<T, C: Mapable<T>> FunctorOnce<T, Mapped> for C
     where C: IntoIterator<Item=T>
 {
-    fn into_fmap<U>(self, f: impl Fn(T) -> U) -> C::Collection<U> {
+    fn into_fmap<U>(self, f: impl FnMut(T) -> U) -> C::Collection<U> {
         self.into_iter().map(f).collect()
     }
 }
@@ -36,7 +36,7 @@ impl<T, C: Mapable<T>> FunctorOnce<T, Mapped> for C
 impl<'a, T: 'a, C: 'a + Mapable<T>> Functor<'a, T, Mapped> for C where
     &'a C: IntoIterator<Item=&'a T>
 {
-    fn fmap<U>(&'a self, f: impl Fn(&T) -> U) -> C::Collection<U> {
+    fn fmap<U>(&'a self, f: impl FnMut(&T) -> U) -> C::Collection<U> {
         self.into_iter().map(f).collect()
     }
 }

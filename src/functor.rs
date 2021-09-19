@@ -21,22 +21,22 @@ pub trait TypeMap<T, Tag = ()> {
 ///
 /// `Self` is the type resulting from applying the functor to the type `T`.
 pub trait FunctorOnce<T, Tag = ()> : TypeMap<T, Tag> {
-    fn into_fmap<U>(self, f: impl Fn(Self::Item) -> U) -> Self::Functor<U>;
+    fn into_fmap<U>(self, f: impl FnMut(Self::Item) -> U) -> Self::Functor<U>;
 }
 
 
 /// Trait for a Functor that works on references.
-pub trait Functor<'a, T: 'a, Tag = ()> : TypeMap<T, Tag>
-{
-    fn fmap<U>(&'a self, f: impl Fn(&Self::Item) -> U) -> Self::Functor<U>;
+pub trait Functor<'a, T: 'a, Tag = ()> : TypeMap<T, Tag> {
+    fn fmap<U>(&'a self, f: impl FnMut(&Self::Item) -> U) -> Self::Functor<U>;
 }
+
 
 impl<T, const N: usize> TypeMap<T> for [T; N] { type Functor<U> = [U; N]; }
 
 /// Arrays come with a built-in implementation for Functor.  Arrays should work
 /// with references also, but don't!
 impl<T, const N: usize> FunctorOnce<T> for [T; N] {
-    fn into_fmap<U>(self, f: impl Fn(T) -> U) -> [U; N] { self.map(f) }
+    fn into_fmap<U>(self, f: impl FnMut(T) -> U) -> [U; N] { self.map(f) }
 }
 
 /// Pairs are functorial in both components.  Use a tag to indicate which.
@@ -52,21 +52,21 @@ impl<A, T> TypeMap<T, Comp1> for (A, T) {
 
 /// (_, _) is functorial on .0
 impl<T, B> FunctorOnce<T, Comp0> for (T, B) {
-    fn into_fmap<U>(self, f: impl Fn(T) -> U) -> (U, B) {
+    fn into_fmap<U>(self, mut f: impl FnMut(T) -> U) -> (U, B) {
         (f(self.0), self.1)
     }
 }
 
 /// (_, _) is functorial on .1
 impl<A, T> FunctorOnce<T, Comp1> for (A, T) {
-    fn into_fmap<U>(self, f: impl Fn(T) -> U) -> (A, U) {
+    fn into_fmap<U>(self, mut f: impl FnMut(T) -> U) -> (A, U) {
         (self.0, f(self.1))
     }
 }
 
 /// (_, _) works on references.
 impl<'a, A: Copy, T: 'a> Functor<'a, T, Comp1> for (A, T) {
-    fn fmap<U>(&'a self, f: impl Fn(&'a T) -> U) -> (A, U) {
+    fn fmap<U>(&'a self, mut f: impl FnMut(&'a T) -> U) -> (A, U) {
         (self.0, f(&self.1)) }
 }
 

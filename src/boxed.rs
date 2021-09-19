@@ -14,13 +14,13 @@ impl<B, T> TypeMap<T, BoxedTag> for B where B : Boxed<T> {
 }
 
 impl<'a, T: 'a, B> Functor<'a, T, BoxedTag> for B where B : Boxed<T> {
-    fn fmap<U>(&'a self, f: impl Fn(&T) -> U) -> B::Boxed<U> {
+    fn fmap<U>(&'a self, mut f: impl FnMut(&T) -> U) -> B::Boxed<U> {
         f(self).into()
     }
 }
 
 impl<T> FunctorOnce<T, BoxedTag> for Box<T> {
-    fn into_fmap<U>(self, f: impl Fn(T) -> U) -> Box<U> {
+    fn into_fmap<U>(self, mut f: impl FnMut(T) -> U) -> Box<U> {
         f(*self).into()
     }
 }

@@ -4,6 +4,8 @@ use std::collections::{BTreeMap, HashMap};
 use std::hash::{BuildHasher, Hash};
 use std::iter::*;
 
+use std::marker::PhantomData;
+
 /// A DerivedMapable is like Mapable, except the member type is given
 /// by a functor.
 pub trait DerivedMapable<T, Tag=()> : FromIterator<Self::Member>
@@ -24,7 +26,7 @@ pub trait DerivedMapableRef<'a, T: 'a, Tag=()> : DerivedMapable<T, Tag> {
         <Self::Member as TypeMap<T, Tag>>::Functor<&'a T>;
 }
 
-pub struct Derived<Tag>(Tag);
+pub struct Derived<Tag>(PhantomData<Tag>);
 
 impl<T, Tag, C: DerivedMapable<T, Tag>> TypeMap<T, Derived<Tag>> for C
 {
@@ -34,9 +36,8 @@ impl<T, Tag, C: DerivedMapable<T, Tag>> TypeMap<T, Derived<Tag>> for C
 impl<T, Tag, C: DerivedMapable<T, Tag>> FunctorOnce<T, Derived<Tag>> for C
     where C: IntoIterator<Item=C::Member>
 {
-    fn into_fmap<U>(self, f: impl Fn(T) -> U) -> Self::Functor<U> {
-        let f = &f;
-        self.into_iter().map(|x : C::Member| x.into_fmap(f)).collect()
+    fn into_fmap<U>(self, mut f: impl FnMut(T) -> U) -> Self::Functor<U> {
+        self.into_iter().map(|x : C::Member| x.into_fmap(&mut f)).collect()
     }
 }
 
@@ -81,11 +82,11 @@ impl<'a, T: 'a, Tag, C: 'a> Functor<'a, T, Derived<Tag>> for C where
     C : DerivedMapableRef<'a, T, Tag>,
     <C::Member as TypeMap<T, Tag>>::Functor<&'a T>: FunctorOnce<&'a T, Tag, Item=&'a T>,
 {
-    fn fmap<U>(&'a self, f: impl Fn(&T) -> U) -> <Self as DerivedMapable<T, Tag>>::Collection<U> {
-        let f = &f;
+    fn fmap<U>(&'a self, mut f: impl FnMut(&T) -> U)
+               -> <Self as DerivedMapable<T, Tag>>::Collection<U> {
         let ff = |p : <C::Member as TypeMap<T, Tag>>::Functor<&'a T>|
                             -> <C::Member as TypeMap<T, Tag>>::Functor<U> {
-            C::Member::cohere::<&'a T, U>(p.into_fmap(f))
+            C::Member::cohere::<&'a T, U>(p.into_fmap(&mut f))
         };
         self.into_iter()
             .map(C::convert_ref)
