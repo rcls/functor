@@ -11,6 +11,8 @@ pub mod bimapable;
 pub mod boxed;
 pub mod functor;
 pub mod mapable;
+pub mod ref_mapable;
+//pub mod pairmapable;
 
 pub use applicative::{Applicative, ApplicativeInto};
 pub use bifunctor::{BiCoherent, BiTypeMap, BiFunctor, BiFunctorOnce};
