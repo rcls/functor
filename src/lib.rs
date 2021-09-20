@@ -12,6 +12,7 @@ pub mod boxed;
 pub mod functor;
 pub mod mapable;
 
+pub use applicative::{Applicative, ApplicativeInto};
 pub use bifunctor::{BiCoherent, BiTypeMap, BiFunctor, BiFunctorOnce};
 pub use boxed::*;
 pub use crate::functor::*;

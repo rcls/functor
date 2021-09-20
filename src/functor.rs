@@ -101,25 +101,23 @@ impl<'a, T> FunctorMut<'a, T> for Option<T> {
     }
 }
 
-pub trait Coherent<T, Tag = ()> : TypeMap<T, Tag> {
-    /// Because we cannot force the expected type equalities, second best is to
-    /// have conversion functions that _should_ always be the identity in
-    /// reality.  2-categories are us.
-    ///
-    /// The only reason to call this, is if you are writing heavily generic code.
+/// Because we cannot force the expected type equalities, second best is to have
+/// conversion functions that _should_ always be the identity in reality.
+/// 2-categories are us.
+///
+/// The only reason to use this, is if you are writing heavily generic code.
+pub trait Coherent<T, Tag = ()> : TypeMap<T, Tag, Functor<T> = Self>
+{
+    /// Map iterated use for Self::Functor<..> to the correct type.
     fn cohere<U, V>(x : <Self::Functor<U> as TypeMap<U, Tag>>::Functor<V>) -> Self::Functor<V>;
 
-    /// Because we cannot force the expected type equalities, second best is to
-    /// have conversion functions that _should_ always be the identity in
-    /// reality.  2-categories are us.
-    ///
-    /// The only reason to call this, is if you are writing heavily generic code.
-    fn inject(x : Self) -> Self::Functor<T>;
+    // /// Map Self to the correct instance of Functor.
+    //fn inject(x : Self) -> Self::Functor<T>;
 }
 
 impl<A,T> Coherent<T, Comp1> for (A,T) {
     fn cohere<U,V>(x : (A,V)) -> (A,V) { x }
-    fn inject(x : (A,T)) -> (A,T) { x }
+    // fn inject(x : (A,T)) -> (A,T) { x }
 }
 
 
