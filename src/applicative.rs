@@ -7,12 +7,14 @@ use crate::{Functor, FunctorOnce, FunctorMut};
 
 pub trait ApplicativeInto<T, Tag=()> : FunctorOnce<T, Tag, Item=T> {
     fn into_pure(x:T) -> Self;
-    fn into_apply<U>(self, f: Self::Functor<impl FnMut(T) -> U>)
-                     -> Self::Functor<U>;
+    fn into_apply<U, F: Fn(T) -> U>(self, f: Self::Functor<F>)
+                                    -> Self::Functor<U>
+        where T: Clone, Self::Functor<F>: Clone;
 }
 
 
 pub trait Applicative<'a, T, Tag=()> : Functor<'a, T, Tag, Item=T> {
+    // Presume we need to clone the item to use pure.
     fn pure(x : &T) -> Self where T: Clone;
     fn apply<U>(&'a self, f : &Self::Functor<impl Fn(&T) -> U>)
                 -> Self::Functor<U>;
@@ -27,7 +29,9 @@ pub trait ApplicativeMut<'a, T, Tag=()> : FunctorMut<'a, T, Tag, Item=T> {
 
 impl<T> ApplicativeInto<T> for Option<T> {
     fn into_pure(x: T) -> Option<T> { Some(x) }
-    fn into_apply<U>(self, f: Self::Functor<impl FnMut(T) -> U>) -> Option<U> {
+    fn into_apply<U, F: Fn(T) -> U>(self, f: Self::Functor<F>) -> Option<U>
+        where Self::Functor<F>: Clone
+    {
         let s = self?;
         Some(f?(s))
     }
