@@ -8,6 +8,8 @@ use crate::{Applicative, Mapable, Mapped};
 
 use std::collections::{LinkedList, VecDeque};
 
+/// This is a trait that encapsulates the IntoIterator requirements for various
+/// implementations regarding reference types.
 pub trait RefIntoIterator<'a> : IntoIterator where Self::Item : 'a {
     type RefIter : Iterator<Item = &'a Self::Item>;
     fn ref_into_iter(&'a self) -> Self::RefIter;

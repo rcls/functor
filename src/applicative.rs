@@ -19,10 +19,14 @@ pub trait ApplicativeOnce<T, Tag=()> : FunctorOnce<T, Tag, Item=T> {
 
 
 pub trait Applicative<'a, T, Tag=()> : Functor<'a, T, Tag, Item=T> {
-    // Presume we need to clone the item to use pure.
+    /// The T → F(T) morphism.
+    ///
+    /// Presume we need to clone the item to use pure.
     fn pure(x : &T) -> Self where T: Clone;
+    /// F(U->A) × F(U) → F(A)
     fn call<A, U>(&'a self, x: &'a Self::Functor<A>) -> Self::Functor<U>
         where T: Fn(&A) -> U;
+    /// F(T) × F(T->U) → F(U)
     fn apply<U>(&'a self, f : &Self::Functor<impl Fn(&T) -> U>)
                 -> Self::Functor<U>;
 }
