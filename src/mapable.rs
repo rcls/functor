@@ -56,8 +56,15 @@ impl<T, C: Mapable<T>> ApplicativeOnce<T, Mapped> for C
     fn pure_once(x: T) -> C {
         std::iter::once(x).collect()
     }
+    fn call_once<A, B>(self, x: C::Collection<A>) -> C::Collection<B>
+        where C::Collection<A>: Clone, T: Fn(A) -> B
+    {
+        self.into_iter()
+            .flat_map(|f| x.clone().into_iter().map(f))
+            .collect()
+    }
     fn apply_once<U, F: Fn(T) -> U>(self, f: C::Collection<F>)
-                                    -> C::Collection<U>
+                                    -> Self::Functor<U>
         where T: Clone, C::Collection<F>: Clone
     {
         self.into_iter()

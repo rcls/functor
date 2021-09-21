@@ -36,6 +36,14 @@ impl<'a, T: 'a, C: 'a + RefMapable<'a, T>> Applicative<'a, T, Mapped> for C
     fn pure(x: &T) -> C where T: Clone {
         std::iter::once(x.clone()).collect()
     }
+    fn call<A, U>(&'a self, x: &C::Collection<A>) -> C::Collection<U>
+        where T: Fn(&A) -> U
+    {
+        let x = Self::inject(x);
+        self.into_iter()
+            .flat_map(|f| x.ref_into_iter().map(f))
+            .collect()
+    }
     fn apply<U>(&'a self, f: &C::Collection<impl Fn(&T) -> U>)
                 -> C::Collection<U>
     {
