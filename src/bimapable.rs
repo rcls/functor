@@ -31,8 +31,8 @@ impl<K, T, Tag, C: BiMapable<K, T, Tag>> TypeMap<T, Derived<K, Tag>> for C
 impl<K, T, Tag, C: BiMapable<K, T, Tag>> FunctorOnce<T, Derived<K, Tag>> for C
     where C: IntoIterator<Item=C::Member>
 {
-    fn into_fmap<U>(self, mut f: impl FnMut(T) -> U) -> Self::Functor<U> {
-        self.into_iter().map(|x| x.into_fmap2(|k| k, &mut f)).collect()
+    fn fmap_once<U>(self, mut f: impl FnMut(T) -> U) -> Self::Functor<U> {
+        self.into_iter().map(|x| x.fmap_once2(|k| k, &mut f)).collect()
     }
 }
 
@@ -46,7 +46,7 @@ impl<'a, K: 'a + Clone, T: 'a, Tag, C: 'a + BiMapable<K, T, Tag>>
 {
     fn fmap<U>(&'a self, mut f: impl FnMut(&T) -> U) -> C::Collection<U> {
         self.into_iter()
-            .map(|v| v.into_fmap2(|k| k.clone(), &mut f))
+            .map(|v| v.fmap_once2(|k| k.clone(), &mut f))
             .map(C::Member::cohere::<&'a K, &'a T, K, U>)
             .collect()
     }
@@ -79,7 +79,7 @@ fn hash_map_test() {
     let expect = [(1, 3), (2, 3), (3, 5)].into_iter().collect();
     assert_eq!(lengths, expect);
 
-    let mapped = hm.into_fmap(|x| x == "Two");
+    let mapped = hm.fmap_once(|x| x == "Two");
     let expect = [(1, false), (2, true), (3, false)].into_iter().collect();
     assert_eq!(mapped, expect);
 }
@@ -88,7 +88,7 @@ fn hash_map_test() {
 fn btree_test() {
     let bm : BTreeMap<u32, &str>
         = [(1, "One"), (2, "Two"), (3, "Three")].into_iter().collect();
-    let mapped = bm.into_fmap(|x| x == "Two");
+    let mapped = bm.fmap_once(|x| x == "Two");
     let expect = [(1, false), (2, true), (3, false)].into_iter().collect();
     assert_eq!(mapped, expect);
 }

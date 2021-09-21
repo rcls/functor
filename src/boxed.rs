@@ -20,7 +20,7 @@ impl<'a, T, B> Functor<'a, T, BoxedTag> for B where B : Boxed<T> {
 }
 
 impl<T> FunctorOnce<T, BoxedTag> for Box<T> {
-    fn into_fmap<U>(self, mut f: impl FnMut(T) -> U) -> Box<U> {
+    fn fmap_once<U>(self, mut f: impl FnMut(T) -> U) -> Box<U> {
         f(*self).into()
     }
 }
@@ -32,7 +32,7 @@ impl<T> Boxed<T> for Box<T> { type Boxed<U> = Box<U>; }
 fn box_test() {
     let b1 = Box::new(27u32);
     let b2 = b1.fmap(|x| { Into::<f64>::into(*x) * 2.0 });
-    let b3 = b1.into_fmap(|x| Into::<f64>::into(x) * 3.0);
+    let b3 = b1.fmap_once(|x| Into::<f64>::into(x) * 3.0);
     assert_eq!(*b2, 54.0);
     assert_eq!(*b3, 81.0);
 }

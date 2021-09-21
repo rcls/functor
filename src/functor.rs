@@ -21,7 +21,7 @@ pub trait TypeMap<T, Tag = ()> {
 ///
 /// `Self` is the type resulting from applying the functor to the type `T`.
 pub trait FunctorOnce<T, Tag = ()> : TypeMap<T, Tag> {
-    fn into_fmap<U>(self, f: impl FnMut(Self::Item) -> U) -> Self::Functor<U>;
+    fn fmap_once<U>(self, f: impl FnMut(Self::Item) -> U) -> Self::Functor<U>;
 }
 
 
@@ -33,7 +33,7 @@ pub trait Functor<'a, T, Tag = ()> : TypeMap<T, Tag> {
 /// Trait for a Functor that works on mutable references.
 pub trait FunctorMut<'a, T, Tag = ()> : TypeMap<T, Tag> {
     /// Functor map while mutating the original.
-    fn mut_fmap<U>(&'a mut self, f: impl FnMut(&mut Self::Item) -> U)
+    fn fmap_mut<U>(&'a mut self, f: impl FnMut(&mut Self::Item) -> U)
                    -> Self::Functor<U>;
     // / Mutate the original but discard output.
     // fn fmutate(&mut self, f: impl FnMut(&mut Self::Item));
@@ -45,7 +45,7 @@ impl<T, const N: usize> TypeMap<T> for [T; N] { type Functor<U> = [U; N]; }
 /// Arrays come with a built-in implementation for Functor.  Arrays should work
 /// with references also, but don't!
 impl<T, const N: usize> FunctorOnce<T> for [T; N] {
-    fn into_fmap<U>(self, f: impl FnMut(T) -> U) -> [U; N] { self.map(f) }
+    fn fmap_once<U>(self, f: impl FnMut(T) -> U) -> [U; N] { self.map(f) }
 }
 
 /// Pairs are functorial in both components.  Use a tag to indicate which.
@@ -57,14 +57,14 @@ impl<A, T> TypeMap<T, Comp1> for (A, T) { type Functor<U> = (A, U); }
 
 /// (_, _) is functorial on .0
 impl<T, B> FunctorOnce<T, Comp0> for (T, B) {
-    fn into_fmap<U>(self, mut f: impl FnMut(T) -> U) -> (U, B) {
+    fn fmap_once<U>(self, mut f: impl FnMut(T) -> U) -> (U, B) {
         (f(self.0), self.1)
     }
 }
 
 /// (_, _) is functorial on .1
 impl<A, T> FunctorOnce<T, Comp1> for (A, T) {
-    fn into_fmap<U>(self, mut f: impl FnMut(T) -> U) -> (A, U) {
+    fn fmap_once<U>(self, mut f: impl FnMut(T) -> U) -> (A, U) {
         (self.0, f(self.1))
     }
 }
@@ -76,7 +76,7 @@ impl<'a, A: Copy, T> Functor<'a, T, Comp1> for (A, T) {
 }
 
 impl<'a, A: Copy, T> FunctorMut<'a, T, Comp1> for (A, T) {
-    fn mut_fmap<U>(&mut self, mut f: impl FnMut(&mut T) -> U) -> (A, U) {
+    fn fmap_mut<U>(&mut self, mut f: impl FnMut(&mut T) -> U) -> (A, U) {
         (self.0, f(&mut self.1)) }
     // fn fmutate(&mut self, mut f: impl FnMut(&mut T)) {
     // f(&mut self.1) }
@@ -86,7 +86,7 @@ impl<T> TypeMap<T> for Option<T> {
     type Functor<U> = Option<U>;
 }
 impl<T> FunctorOnce<T> for Option<T> {
-    fn into_fmap<U>(self, mut f: impl FnMut(T) -> U) -> Option<U> {
+    fn fmap_once<U>(self, mut f: impl FnMut(T) -> U) -> Option<U> {
         Some(f(self?))
     }
 }
@@ -96,7 +96,7 @@ impl<'a, T> Functor<'a, T> for Option<T> {
     }
 }
 impl<'a, T> FunctorMut<'a, T> for Option<T> {
-    fn mut_fmap<U>(&mut self, mut f: impl FnMut(&mut T) -> U) -> Option<U> {
+    fn fmap_mut<U>(&mut self, mut f: impl FnMut(&mut T) -> U) -> Option<U> {
         Some(f(self.as_mut()?))
     }
 }
@@ -124,6 +124,6 @@ impl<A,T> Coherent<T, Comp1> for (A,T) {
 #[test]
 fn array1() {
     let v = [1, 2, 3];
-    let vv = v.into_fmap(|x| x.to_string());
+    let vv = v.fmap_once(|x| x.to_string());
     assert_eq!(vv, ["1", "2", "3"]);
 }

@@ -5,9 +5,9 @@
 
 use crate::{Functor, FunctorOnce, FunctorMut};
 
-pub trait ApplicativeInto<T, Tag=()> : FunctorOnce<T, Tag, Item=T> {
-    fn into_pure(x:T) -> Self;
-    fn into_apply<U, F: Fn(T) -> U>(self, f: Self::Functor<F>)
+pub trait ApplicativeOnce<T, Tag=()> : FunctorOnce<T, Tag, Item=T> {
+    fn pure_once(x:T) -> Self;
+    fn apply_once<U, F: Fn(T) -> U>(self, f: Self::Functor<F>)
                                     -> Self::Functor<U>
         where T: Clone, Self::Functor<F>: Clone;
 }
@@ -27,9 +27,9 @@ pub trait ApplicativeMut<'a, T, Tag=()> : FunctorMut<'a, T, Tag, Item=T> {
 
 }
 
-impl<T> ApplicativeInto<T> for Option<T> {
-    fn into_pure(x: T) -> Option<T> { Some(x) }
-    fn into_apply<U, F: Fn(T) -> U>(self, f: Self::Functor<F>) -> Option<U>
+impl<T> ApplicativeOnce<T> for Option<T> {
+    fn pure_once(x: T) -> Option<T> { Some(x) }
+    fn apply_once<U, F: Fn(T) -> U>(self, f: Self::Functor<F>) -> Option<U>
         where Self::Functor<F>: Clone
     {
         let s = self?;
@@ -56,8 +56,8 @@ impl<'a, T: Clone> ApplicativeMut<'a, T> for Option<T> {
 
 #[test]
 fn apply_option() {
-    assert_eq!(None.into_apply(Some(|x:u32| x)), None);
+    assert_eq!(None.apply_once(Some(|x:u32| x)), None);
     let n : Option<fn(u32)->u32> = None;
-    assert_eq!(Some(1).into_apply(n), None);
-    assert_eq!(Some(3).into_apply(Some(|x| x*x)), Some(9));
+    assert_eq!(Some(1).apply_once(n), None);
+    assert_eq!(Some(3).apply_once(Some(|x| x*x)), Some(9));
 }
