@@ -57,6 +57,15 @@ impl<T, C: Mapable<T>> ApplicativeOnce<T, Mapped> for C
     fn pure_once(x: T) -> C {
         std::iter::once(x).collect()
     }
+    fn lift2_once<U, V>(f: impl Fn(T, U) -> V,
+                        a: C, b: C::Collection<U>) -> C::Collection<V>
+        where T: Clone, C::Collection<U>: Clone
+    {
+        let f = &f;
+        a   .into_iter()
+            .flat_map(|x| b.clone().into_iter().map(move |y| f(x.clone(), y)))
+            .collect()
+    }
     fn call_once<A, B>(self, x: C::Collection<A>) -> C::Collection<B>
         where C::Collection<A>: Clone, T: Fn(A) -> B
     {

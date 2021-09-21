@@ -8,33 +8,39 @@ use crate::{Applicative, Mapable, Mapped, RefIntoIterator};
 
 use std::collections::{LinkedList, VecDeque};
 
+/// RefMapable is a trait that describes what is required to implement
+/// Applicable using iterators.
+///
+/// The actual iterator constraints are in the inherited traits Mapable and
+/// RefIntoIterator.  The RefMapable trait glues these together over multiple
+/// types.
 pub trait RefMapable<'a, T: 'a> : 'a + Mapable<T> + RefIntoIterator<'a>
 {
+    /// The collection at different types should also be RefMapable.
     type RefColl<'b, U: 'b>: RefMapable<'b, U>;
-    // This should be implemented as the identity function!
+
+    /// Rust doesn't provide a way to constain that RefColl and Collection are
+    /// the same associated type.  So we provide a dummy function to help us.
+    ///
+    /// This should be implemented as the identity function!
     fn inject<'b, U: 'b>(x: &'b Self::Collection<U>)
                          -> &'b Self::RefColl<'b, U>;
 }
+
 
 impl<'a, T: 'a, C: RefMapable<'a, T>> Applicative<'a, T, Mapped> for C
 {
     fn pure(x: &T) -> C where T: Clone {
         std::iter::once(x.clone()).collect()
     }
-    fn call<A, U>(&'a self, x: &C::Collection<A>) -> C::Collection<U>
-        where T: Fn(&A) -> U
-    {
-        let x = Self::inject(x);
-        self.ref_into_iter()
-            .flat_map(|f| x.ref_into_iter().map(f))
-            .collect()
-    }
-    fn apply<U>(&'a self, f: &C::Collection<impl Fn(&T) -> U>)
-                -> C::Collection<U>
-    {
-        let f = Self::inject(f);
-        self.ref_into_iter()
-            .flat_map(move |x| f.ref_into_iter().map(|g| g(x)))
+
+    fn lift2<U:'a, V:'a>(f: impl Fn(&'a T, &'a U) -> V,
+                         a: &'a C, b: &'a C::Collection<U>)
+                         -> C::Collection<V> {
+        let f = &f;
+        let b = Self::inject(b);
+        a   .ref_into_iter()
+            .flat_map(|x| b.ref_into_iter().map(move |y| f(x, y)))
             .collect()
     }
 }

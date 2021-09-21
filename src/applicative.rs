@@ -9,26 +9,42 @@ use crate::{Functor, FunctorOnce, FunctorMut};
 pub trait ApplicativeOnce<T, Tag=()> : FunctorOnce<T, Tag, Item=T> {
     fn pure_once(x:T) -> Self;
 
+    fn lift2_once<U, V>(f: impl Fn(T, U) -> V,
+                        a: Self, b: Self::Functor<U>) -> Self::Functor<V>
+        where T: Clone, Self::Functor<U>: Clone;
+
     fn call_once<A, U>(self, x: Self::Functor<A>) -> Self::Functor<U>
         where T: Fn(A) -> U, Self::Functor<A> : Clone;
 
     fn apply_once<U, F: Fn(T) -> U>(self, f: Self::Functor<F>)
                                     -> Self::Functor<U>
-        where T: Clone, Self::Functor<F>: Clone;
+        where T: Clone, Self: Sized, Self::Functor<F>: Clone
+    { Self::lift2_once(|x,f| f(x), self, f) }
 }
 
 
-pub trait Applicative<'a, T: 'a, Tag=()> : Functor<'a, T, Tag, Item=T> {
+pub trait Applicative<'a, T: 'a, Tag=()> : Functor<'a, T, Tag> {
     /// The T → F(T) morphism.
     ///
-    /// Presume we need to clone the item to use pure.
+    /// Presume that we need to clone the item to use pure.
     fn pure(x : &T) -> Self where T: Clone;
-    /// F(U->A) × F(U) → F(A)
-    fn call<A, U>(&'a self, x: &'a Self::Functor<A>) -> Self::Functor<U>
-        where T: Fn(&A) -> U;
-    /// F(T) × F(T->U) → F(U)
-    fn apply<U>(&'a self, f : &Self::Functor<impl Fn(&T) -> U>)
-                -> Self::Functor<U>;
+
+    /// (T×U → V) × F(T) × F(U) → F(V)
+    fn lift2<U: 'a, V: 'a>(f: impl Fn(&'a T, &'a U) -> V,
+                           a: &'a Self, b: &'a Self::Functor<U>)
+                           -> Self::Functor<V>;
+
+    /// F(U→A) × F(U) → F(A)
+    fn call<A: 'a, U: 'a>(&'a self, x: &'a Self::Functor<A>) -> Self::Functor<U>
+        where T: Fn(&A) -> U {
+        Self::lift2(|f,x| f(x), self, x)
+    }
+
+    /// F(T) × F(T→U) → F(U)
+    fn apply<U: 'a>(&'a self, f : &'a Self::Functor<impl Fn(&T) -> U + 'a>)
+                    -> Self::Functor<U> {
+        Self::lift2(|x,f| f(x), self, f)
+    }
 }
 
 
@@ -36,11 +52,16 @@ pub trait ApplicativeMut<'a, T, Tag=()> : FunctorMut<'a, T, Tag, Item=T> {
     fn mut_pure(x : &'a T) -> Self;
     fn mut_apply<U>(&mut self, f : &mut Self::Functor<impl FnMut(&mut T) -> U>)
                     -> Self::Functor<U>;
-
 }
 
 impl<T> ApplicativeOnce<T> for Option<T> {
     fn pure_once(x: T) -> Option<T> { Some(x) }
+
+    fn lift2_once<U, V>(f: impl Fn(T, U) -> V,
+                        a: Option<T>, b: Option<U>) -> Option<V> {
+        Some(f(a?, b?))
+    }
+
     fn call_once<A, B>(self, x: Option<A>) -> Option<B> where T: Fn(A) -> B {
         Some(self?(x?))
     }
@@ -52,12 +73,10 @@ impl<T> ApplicativeOnce<T> for Option<T> {
 
 impl<'a, T: 'a> Applicative<'a, T> for Option<T> {
     fn pure(x : &T) -> Option<T> where T: Clone { Some(x.clone()) }
-    fn call<A, U>(&'a self, x: &'a Option<A>) -> Option<U> where T: Fn(&A) -> U {
-        Some(self.as_ref()?(x.as_ref()?))
-    }
-    fn apply<U>(&self, f: &Option<impl Fn(&T) -> U>) -> Option<U> {
-        let s = self.as_ref()?;
-        Some(f.as_ref()?(s))
+
+    fn lift2<U, V>(f: impl Fn(&'a T, &'a U) -> V,
+                   a: &'a Option<T>, b: &'a Option<U>) -> Option<V> {
+        Some(f(a.as_ref()?, b.as_ref()?))
     }
 }
 
