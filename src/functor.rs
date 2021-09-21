@@ -26,7 +26,7 @@ pub trait FunctorOnce<T, Tag = ()> : TypeMap<T, Tag> {
 
 
 /// Trait for a Functor that works on references.
-pub trait Functor<'a, T, Tag = ()> : TypeMap<T, Tag> {
+pub trait Functor<'a, T: 'a, Tag = ()> : TypeMap<T, Tag> {
     fn fmap<U>(&'a self, f: impl FnMut(&Self::Item) -> U) -> Self::Functor<U>;
 }
 
@@ -70,7 +70,7 @@ impl<A, T> FunctorOnce<T, Comp1> for (A, T) {
 }
 
 /// (_, _) works on references.
-impl<'a, A: Copy, T> Functor<'a, T, Comp1> for (A, T) {
+impl<'a, A: Copy, T: 'a> Functor<'a, T, Comp1> for (A, T) {
     fn fmap<U>(&self, mut f: impl FnMut(&T) -> U) -> (A, U) {
         (self.0, f(&self.1)) }
 }
@@ -90,7 +90,7 @@ impl<T> FunctorOnce<T> for Option<T> {
         Some(f(self?))
     }
 }
-impl<'a, T> Functor<'a, T> for Option<T> {
+impl<'a, T: 'a> Functor<'a, T> for Option<T> {
     fn fmap<U>(&self, mut f: impl FnMut(&T) -> U) -> Option<U> {
         Some(f(self.as_ref()?))
     }

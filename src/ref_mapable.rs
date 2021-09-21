@@ -8,7 +8,7 @@ use crate::{Applicative, Mapable, Mapped, RefIntoIterator};
 
 use std::collections::{LinkedList, VecDeque};
 
-pub trait RefMapable<'a, T: 'a> : Mapable<T> + RefIntoIterator<'a>
+pub trait RefMapable<'a, T: 'a> : 'a + Mapable<T> + RefIntoIterator<'a>
 {
     type RefColl<'b, U: 'b>: RefMapable<'b, U>;
     // This should be implemented as the identity function!
@@ -16,7 +16,7 @@ pub trait RefMapable<'a, T: 'a> : Mapable<T> + RefIntoIterator<'a>
                          -> &'b Self::RefColl<'b, U>;
 }
 
-impl<'a, T: 'a, C: 'a + RefMapable<'a, T>> Applicative<'a, T, Mapped> for C
+impl<'a, T: 'a, C: RefMapable<'a, T>> Applicative<'a, T, Mapped> for C
 {
     fn pure(x: &T) -> C where T: Clone {
         std::iter::once(x.clone()).collect()
@@ -50,4 +50,17 @@ impl<'a, T: 'a> RefMapable<'a, T> for LinkedList<T> {
 impl<'a, T: 'a> RefMapable<'a, T> for VecDeque<T> {
     type RefColl<'b, U: 'b> = VecDeque<U>;
     fn inject<'b, U: 'b>(x : &'b VecDeque<U>) -> &'b VecDeque<U> { x }
+}
+
+#[test]
+fn ref_app() {
+    fn ten  (x: &u32) -> u32 { *x * 10 }
+    fn hundy(x: &u32) -> u32 { *x * 100 }
+    let v: Vec<u32> = vec![1, 2, 3];
+    let f: Vec<fn(&u32) -> u32> = vec![ten, hundy];
+
+    let fv = (&f).call(&v);
+    assert_eq!(fv, [10, 20, 30, 100, 200, 300]);
+    let vf = (&v).apply(&f);
+    assert_eq!(vf, [10, 100, 20, 200, 30, 300]);
 }

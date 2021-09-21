@@ -18,7 +18,7 @@ pub trait ApplicativeOnce<T, Tag=()> : FunctorOnce<T, Tag, Item=T> {
 }
 
 
-pub trait Applicative<'a, T, Tag=()> : Functor<'a, T, Tag, Item=T> {
+pub trait Applicative<'a, T: 'a, Tag=()> : Functor<'a, T, Tag, Item=T> {
     /// The T → F(T) morphism.
     ///
     /// Presume we need to clone the item to use pure.
@@ -50,8 +50,8 @@ impl<T> ApplicativeOnce<T> for Option<T> {
     }
 }
 
-impl<'a, T: Clone> Applicative<'a, T> for Option<T> {
-    fn pure(x : &T) -> Option<T> { Some(x.clone()) }
+impl<'a, T: 'a> Applicative<'a, T> for Option<T> {
+    fn pure(x : &T) -> Option<T> where T: Clone { Some(x.clone()) }
     fn call<A, U>(&'a self, x: &'a Option<A>) -> Option<U> where T: Fn(&A) -> U {
         Some(self.as_ref()?(x.as_ref()?))
     }
